@@ -1,10 +1,10 @@
-# Svelte Convex Starter App
+# NextJS Convex Starter App
 
-This is a starter application using Svelte and Convex, managed with NX for monorepo capabilities.
+This is a starter application using NextJS and Convex, managed with NX for monorepo capabilities.
 
 ## Project Structure
 
-- `apps/webapp`: The frontend Svelte application
+- `apps/webapp`: The frontend NextJS application
 - `services/backend`: The Convex backend service
 
 ## Development
@@ -16,6 +16,7 @@ pnpm run dev
 ```
 
 This will start:
+
 - The webapp at http://localhost:3000
 - The Convex backend development server
 
