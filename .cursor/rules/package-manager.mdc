@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# package manager: pnpm
+We use pnpm as our package manager
+
+## packages
+- apps/webapp - frontend project
+- services/backend - backend project
