@@ -5,7 +5,7 @@ alwaysApply: true
 ---
 
 # package manager: pnpm
-We use pnpm as our package manager
+We use pnpm as our package manager. This is a pnpm workspace with multiple packages.
 
 ## packages
 - apps/webapp - frontend project
