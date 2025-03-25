@@ -6,22 +6,19 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nx run-many --target=dev --projects=webapp,@workspace/backend --parallel",
-    "lint-staged": "lint-staged",
-    "lint-check": "cd apps/webapp && pnpm exec next lint || exit 1",
-    "prepare": "husky"
+    "lint": "biome check .",
+    "lint:fix": "biome check --apply .",
+    "format": "biome format .",
+    "format:fix": "biome format --write ."
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "@nx/workspace": "^20.6.1",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.0",
     "nx": "^20.6.1"
-  },
-  "lint-staged": {
-    "apps/webapp/**/*.{js,jsx,ts,tsx}": [
-      "cd apps/webapp && pnpm exec eslint --max-warnings=0"
-    ]
   }
 }

@@ -1,6 +1,6 @@
 'use client';
-import { useQuery } from 'convex/react';
 import { api } from '@workspace/backend/convex/_generated/api';
+import { useQuery } from 'convex/react';
 
 export default function Home() {
   const appInfo = useQuery(api.appinfo.get);
