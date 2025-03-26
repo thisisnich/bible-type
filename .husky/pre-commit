@@ -1,10 +1,5 @@
 #!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
 
-# Format and organize imports
-pnpm biome format --write --no-errors-on-unmatched .
-
-# Check and apply safe fixes
-pnpm biome check --write --no-errors-on-unmatched .
-
-# Exit with an error code if there are still issues that couldn't be automatically fixed
-pnpm biome check --no-errors-on-unmatched .
+# Run lint-staged to only process staged files
+pnpm lint-staged
