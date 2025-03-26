@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Shadcn
+
+- When adding a new component, use the command format `npx shadcn@latest add <component-name>`
