@@ -2,18 +2,29 @@
 
 This is a starter application using NextJS and Convex, managed with NX for monorepo capabilities.
 
+## Getting Started
+### Pre-requisites
+
+- Node.js 22 or later
+- pnpm package manager
+- Convex account - Register at https://www.convex.dev/
+
+### Setup
+1. Run `pnpm install` to install the dependencies
+2. Go to `services/backend` and run `pnpm dev` - this should prompt you to login to Convex and create a new project.
+    Note: This will create a .env.local file with the CONVEX_URL environment variable.
+3. Create a `.env.local` file in the `apps/webapp` directory and add the following:
+   ```sh
+   NEXT_PUBLIC_CONVEX_URL=<your-convex-project-url> # copy this from the backend .env.local file
+   ```
+4. Run `pnpm dev` in the root directory to start the NextJS application
+
 ## Project Structure
 
 - `apps/webapp`: The frontend NextJS application
 - `services/backend`: The Convex backend service
 
 ## Development
-
-### Pre-requisites
-
-- Node.js 22 or later
-- pnpm package manager
-- Convex account - Register at https://www.convex.dev/
 
 To run both the frontend and backend in parallel:
 
