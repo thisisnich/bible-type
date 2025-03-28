@@ -28,4 +28,4 @@ jobs:
     - name: Deploy Backend to Convex
       env:
         CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_PROD }}
-      run: pnpm --filter @workspace/backend deploy
+      run: pnpm --filter @workspace/backend run deploy
