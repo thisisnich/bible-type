@@ -55,6 +55,28 @@ To add a new project to the monorepo:
 2. Add a `project.json` file to define the project's targets
 3. Update the root `package.json` to include the new project in the dev command if needed
 
+## Deployment
+
+### Convex Backend Deployment
+
+To deploy your Convex backend to production:
+
+1. Generate a deployment key from the Convex dashboard:
+   - Go to your project in the [Convex dashboard](https://dashboard.convex.dev)
+   - Navigate to Settings > API Keys
+   - Create a new deployment key
+
+2. Add the deployment key to GitHub Secrets:
+   - Go to your GitHub repository
+   - Navigate to Settings > Secrets and variables > Actions
+   - Click "New repository secret"
+   - Name: `CONVEX_DEPLOY_KEY_PROD`
+   - Value: Your deployment key from the Convex dashboard
+
+3. The GitHub Action workflow included in this template will handle deployment of your Convex backend automatically when you push to the main branch.
+
+This setup allows for secure automated deployments of your Convex functions and schema without exposing your credentials.
+
 <br/>
 
 # FAQ
