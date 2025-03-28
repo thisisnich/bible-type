@@ -26,5 +26,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.5.0",
     "nx": "^20.6.1"
+  },
+  "dependencies": {
+    "@radix-ui/react-tooltip": "^1.1.8"
   }
 }
