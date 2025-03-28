@@ -3,7 +3,15 @@
 import { cn } from '@/lib/utils';
 import { usePresentationSync } from '@/modules/presentation/use-presentation-sync';
 import { useSearchParams } from 'next/navigation';
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {
+  Suspense,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 type PresentationContextType = {
   isFullScreen: boolean;
@@ -33,9 +41,23 @@ interface PresentationContainerProps {
   totalSlides: number;
   className?: string;
   presentationKey?: string;
+  fallback?: React.ReactNode;
 }
 
+// Main component that wraps the inner component with Suspense
 export function PresentationContainer({
+  fallback,
+  children,
+  ...props
+}: PresentationContainerProps) {
+  return (
+    <Suspense fallback={fallback}>
+      <PresentationContainerInner {...props}>{children}</PresentationContainerInner>
+    </Suspense>
+  );
+}
+
+function PresentationContainerInner({
   children,
   totalSlides,
   className,
