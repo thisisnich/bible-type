@@ -17,6 +17,9 @@ export function usePresentationSync({
   // Internal state for current slide (this is the source of truth)
   const [currentSlide, setCurrentSlideInternal] = useState(initialSlide);
 
+  // Track the timestamp of the last local slide change
+  const [lastChangeTimestamp, setLastChangeTimestamp] = useState<number>(Date.now());
+
   // Track if we're currently processing an update to avoid loops
   const updatingRef = useRef(false);
 
@@ -68,21 +71,33 @@ export function usePresentationSync({
 
   // Sync to backend
   const syncToBackend = useCallback(
-    (slideNumber: number) => {
+    (slideNumber: number, timestamp: number) => {
       if (!isSyncEnabled || !key) return;
-      updateSlide({ key, slide: slideNumber - 1 });
+      updateSlide({
+        key,
+        slide: slideNumber - 1,
+        timestamp,
+      });
     },
     [key, updateSlide, isSyncEnabled]
   );
 
   // Set the slide with side effects (URL update, backend sync)
   const setCurrentSlide = useCallback(
-    (slideNumber: number, { fromBackend = false, updateUrl = true, updateBackend = true } = {}) => {
+    (
+      slideNumber: number,
+      { fromBackend = false, updateUrl = true, updateBackend = true, timestamp = Date.now() } = {}
+    ) => {
       try {
         updatingRef.current = true;
 
         // Validate and clamp slide number
         const validSlide = Math.max(1, Math.min(slideNumber, totalSlides));
+
+        // For local changes, always update the timestamp
+        if (!fromBackend) {
+          setLastChangeTimestamp(timestamp);
+        }
 
         // Update internal state
         setCurrentSlideInternal(validSlide);
@@ -94,7 +109,7 @@ export function usePresentationSync({
 
         // Update backend if needed and not originated from backend
         if (updateBackend && !fromBackend && isSyncEnabled) {
-          syncToBackend(validSlide);
+          syncToBackend(validSlide, timestamp);
         }
       } finally {
         // Use a small timeout to ensure state updates complete
@@ -110,19 +125,22 @@ export function usePresentationSync({
   // Navigation methods
   const nextSlide = useCallback(() => {
     if (currentSlide < totalSlides) {
-      setCurrentSlide(currentSlide + 1);
+      const now = Date.now();
+      setCurrentSlide(currentSlide + 1, { timestamp: now });
     }
   }, [currentSlide, totalSlides, setCurrentSlide]);
 
   const previousSlide = useCallback(() => {
     if (currentSlide > 1) {
-      setCurrentSlide(currentSlide - 1);
+      const now = Date.now();
+      setCurrentSlide(currentSlide - 1, { timestamp: now });
     }
   }, [currentSlide, setCurrentSlide]);
 
   const goToSlide = useCallback(
     (index: number) => {
-      setCurrentSlide(index);
+      const now = Date.now();
+      setCurrentSlide(index, { timestamp: now });
     },
     [setCurrentSlide]
   );
@@ -132,11 +150,23 @@ export function usePresentationSync({
     if (!isSyncEnabled || !presentationState || updatingRef.current) return;
 
     const backendSlide = presentationState.currentSlide + 1; // Convert from 0-based to 1-based
-    if (backendSlide !== currentSlide) {
+
+    // Check if lastUpdated exists (type guard for presentationState)
+    if (!('lastUpdated' in presentationState)) return;
+
+    const backendTimestamp = presentationState.lastUpdated;
+
+    // Only update if the backend change is newer than our last local change
+    // This is the key part: latest timestamp wins
+    if (backendSlide !== currentSlide && backendTimestamp > lastChangeTimestamp) {
       // Only update URL and internal state, not the backend again
-      setCurrentSlide(backendSlide, { fromBackend: true, updateBackend: false });
+      setCurrentSlide(backendSlide, {
+        fromBackend: true,
+        updateBackend: false,
+        timestamp: backendTimestamp,
+      });
     }
-  }, [presentationState, currentSlide, isSyncEnabled, setCurrentSlide]);
+  }, [presentationState, currentSlide, isSyncEnabled, setCurrentSlide, lastChangeTimestamp]);
 
   // Function to toggle sync mode by updating URL
   const toggleSyncMode = useCallback(() => {

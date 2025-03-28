@@ -18,6 +18,7 @@ export const getPresentationState = query({
       return {
         key: args.key,
         currentSlide: 0,
+        lastUpdated: 0,
         exists: false,
       };
     }
@@ -34,8 +35,11 @@ export const setCurrentSlide = mutation({
   args: {
     key: v.string(),
     slide: v.number(),
+    timestamp: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const timestamp = args.timestamp || Date.now();
+
     // Look up the presentation state by key
     const state = await ctx.db
       .query('presentationState')
@@ -47,14 +51,20 @@ export const setCurrentSlide = mutation({
       return await ctx.db.insert('presentationState', {
         key: args.key,
         currentSlide: args.slide,
-        lastUpdated: Date.now(),
+        lastUpdated: timestamp,
       });
     }
 
-    // Update the existing state
-    return await ctx.db.patch(state._id, {
-      currentSlide: args.slide,
-      lastUpdated: Date.now(),
-    });
+    // Only update if the incoming timestamp is newer than the existing one
+    if (timestamp > state.lastUpdated) {
+      // Update the existing state
+      return await ctx.db.patch(state._id, {
+        currentSlide: args.slide,
+        lastUpdated: timestamp,
+      });
+    }
+
+    // Return the current state if we didn't update
+    return state._id;
   },
 });
