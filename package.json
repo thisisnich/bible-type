@@ -10,7 +10,8 @@
     "lint": "biome check .",
     "lint:fix": "biome check --apply .",
     "format": "biome format .",
-    "format:fix": "biome format --write ."
+    "format:fix": "biome format --write .",
+    "typecheck": "pnpm --filter @workspace/webapp --filter @workspace/backend run typecheck"
   },
   "lint-staged": {
     "**/*.{ts,tsx,js,jsx,json,md}": [
@@ -26,7 +27,8 @@
     "@nx/workspace": "^20.6.1",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.0",
-    "nx": "^20.6.1"
+    "nx": "^20.6.1",
+    "typescript": "^5.3.3"
   },
   "dependencies": {
     "@radix-ui/react-tooltip": "^1.1.8"
