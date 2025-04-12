@@ -11,13 +11,24 @@ This is a starter application using NextJS and Convex, managed with NX for monor
 
 ### Setup
 1. Run `pnpm install` to install the dependencies
-2. Go to `services/backend` and run `pnpm dev` - this should prompt you to login to Convex and create a new project.
-    Note: This will create a .env.local file with the CONVEX_URL environment variable.
-3. Create a `.env.local` file in the `apps/webapp` directory and add the following:
+2. Run `pnpm run setup` to initialize the Convex backend and configure the webapp
+
+   This script will:
+   - Initialize the Convex backend using `npx convex dev --once`
+   - Extract the CONVEX_URL from the backend's .env.local file
+   - Create/update the webapp's .env.local file with the NEXT_PUBLIC_CONVEX_URL
+
+3. Run `pnpm dev` in the root directory to start the NextJS application and Convex backend
+
+#### Manual Setup (Alternative)
+If you prefer to set up manually:
+1. Go to `services/backend` and run `npx convex dev --once` - this should prompt you to login to Convex and create a new project.
+   Note: This will create a .env.local file with the CONVEX_URL environment variable.
+2. Create a `.env.local` file in the `apps/webapp` directory and add the following:
    ```sh
    NEXT_PUBLIC_CONVEX_URL=<your-convex-project-url> # copy this from the backend .env.local file
    ```
-4. Run `pnpm dev` in the root directory to start the NextJS application
+3. Run `pnpm dev` in the root directory to start both services
 
 ## Project Structure
 
