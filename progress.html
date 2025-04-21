@@ -136,8 +136,17 @@
       - Do not include tests in the list of tasks.
       - The implementation notes at the end of each version provide context and should be updated as needed.
       - When adding a new version, create a new section with appropriate metadata.
-    -->
 
+      ⚠️ Implementation Reminders:
+      - Keep changes incremental - Make small, focused changes that are easy to validate
+      - Verify before proceeding - After creating each file, verify it compiles before moving on
+      - Follow existing patterns - Match the code style and patterns already in the codebase
+      - Preserve existing code - Be very careful when modifying existing files
+      - Minimal dependencies - Avoid adding unnecessary dependencies
+      - Implementation order - Start with data models, then backend, then frontend core components, then integration
+      - Type safety first - Ensure strong typing throughout the implementation
+      - Complete one feature at a time - Implement features vertically (backend to frontend) before moving to the next
+    -->
       <section id="v1.0">
         <meta name="version" content="1.0" />
         <h1>📍 Version 1.0</h1>
