@@ -1,4 +1,5 @@
 import type { AuthState } from '@workspace/backend/types/auth/AuthState';
+import { SessionIdArg } from 'convex-helpers/server/sessions';
 import { v } from 'convex/values';
 import type { Id } from './_generated/dataModel';
 import { mutation, query } from './_generated/server';
@@ -50,7 +51,7 @@ const generateAnonUsername = (): string => {
 
 export const getState = query({
   args: {
-    sessionId: v.string(),
+    ...SessionIdArg,
   },
   handler: async (ctx, args): Promise<AuthState> => {
     const exists = await ctx.db
@@ -60,6 +61,7 @@ export const getState = query({
 
     if (!exists) {
       return {
+        sessionId: args.sessionId,
         state: 'unauthenticated' as const,
         reason: 'session_not_found' as const,
       };
@@ -67,6 +69,7 @@ export const getState = query({
 
     if (!exists.userId) {
       return {
+        sessionId: args.sessionId,
         state: 'unauthenticated' as const, //this session was unlinked from the user
         reason: 'session_deauthorized' as const,
       };
@@ -76,12 +79,14 @@ export const getState = query({
 
     if (!user) {
       return {
+        sessionId: args.sessionId,
         state: 'unauthenticated' as const, //the linked user log longer exists
         reason: 'user_not_found' as const,
       };
     }
 
     return {
+      sessionId: args.sessionId,
       state: 'authenticated' as const,
       user,
     };
@@ -91,7 +96,7 @@ export const getState = query({
 // Anonymous login mutation
 export const loginAnon = mutation({
   args: {
-    sessionId: v.string(),
+    ...SessionIdArg,
   },
   handler: async (ctx, args) => {
     // Check if the session exists
@@ -99,6 +104,8 @@ export const loginAnon = mutation({
       .query('sessions')
       .withIndex('by_sessionId', (q) => q.eq('sessionId', args.sessionId))
       .first();
+
+    console.log('sessionId', args.sessionId);
 
     // Create a new session if it doesn't exist
     let sessionId: Id<'sessions'>;
@@ -136,7 +143,7 @@ export const loginAnon = mutation({
 // Logout mutation
 export const logout = mutation({
   args: {
-    sessionId: v.string(),
+    ...SessionIdArg,
   },
   handler: async (ctx, args) => {
     // Find the session by sessionId
@@ -161,8 +168,8 @@ export const logout = mutation({
 // Update user name mutation
 export const updateUserName = mutation({
   args: {
-    sessionId: v.string(),
     newName: v.string(),
+    ...SessionIdArg,
   },
   handler: async (ctx, args) => {
     // Validate input

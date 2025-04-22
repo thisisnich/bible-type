@@ -1,32 +1,68 @@
 'use client';
 import { api } from '@workspace/backend/convex/_generated/api';
 import type { AuthState } from '@workspace/backend/types/auth/AuthState';
-import { useQuery } from 'convex/react';
+import { SessionProvider, type UseStorage, useSessionQuery } from 'convex-helpers/react/sessions';
+import type { SessionId } from 'convex-helpers/server/sessions';
 import { createContext, useContext, useEffect, useState } from 'react';
-const SESSION_ID_KEY = 'sessionId';
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  useEffect(() => {
-    //1. load from local storage
-    const sessionId = localStorage.getItem(SESSION_ID_KEY);
-    if (sessionId) {
-      setSessionId(sessionId);
-    } else {
-      //create a new session id
-      const newSessionId = crypto.randomUUID();
-      localStorage.setItem(SESSION_ID_KEY, newSessionId);
-      setSessionId(newSessionId);
-    }
-  }, []);
+export const AuthProvider = withSessionProvider(({ children }: { children: React.ReactNode }) => {
   //2. get the backend validation of what the auth state is
-  const authState = useQuery(api.auth.getState, sessionId ? { sessionId } : 'skip');
+  const authState = useSessionQuery(api.auth.getState);
   return <AuthContext.Provider value={authState}>{children}</AuthContext.Provider>;
-};
+});
 
 export const useAuthState = () => {
   const authState = useContext(AuthContext);
   return authState;
+};
+
+function withSessionProvider(Component: React.ComponentType<any>) {
+  return (props: { children: React.ReactNode }) => {
+    return (
+      <SessionProvider storageKey="sessionId" useStorage={useLocalStorage}>
+        <Component {...props} />
+      </SessionProvider>
+    );
+  };
+}
+
+/**
+ * Replacement helper for the use local storage hook that was not working
+ * @param key
+ * @param nextSessionId
+ * @returns
+ */
+const useLocalStorage = (
+  key: string,
+  nextSessionId: SessionId | undefined
+): ReturnType<UseStorage<SessionId | undefined>> => {
+  const [sessionId, setSessionId] = useState<SessionId>('' as string & { __SessionId: true });
+
+  useEffect(() => {
+    //run only on the client
+    const prevSessionId = localStorage.getItem(key) as SessionId | null;
+    if (prevSessionId == null) {
+      if (nextSessionId) {
+        //no last session, create a new one and mark it has started
+        localStorage.setItem(key, nextSessionId);
+        setSessionId(nextSessionId); //if local storage has value, use it instead of the one passed in.
+      } else {
+        //there is no next session id, do nothing
+      }
+    } else {
+      setSessionId(prevSessionId); //load the previous session
+    }
+  }, [key, nextSessionId]);
+
+  const set = (val: SessionId | undefined) => {
+    //do nothing - this doesn't seem to be called
+  };
+  return [
+    sessionId, //the value returned here will be used as the source of truth
+    (v: SessionId | undefined) => {
+      set(v);
+    },
+  ] satisfies [SessionId | null, (value: SessionId) => void];
 };
