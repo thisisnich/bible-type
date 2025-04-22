@@ -1,4 +1,4 @@
-import type { Doc } from '@workspace/backend/convex/_generated/dataModel';
+import type { Doc } from '../../convex/_generated/dataModel';
 
 export type AuthState =
   | {

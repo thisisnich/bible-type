@@ -1,6 +1,6 @@
-import type { AuthState } from '@workspace/backend/types/auth/AuthState';
 import { SessionIdArg } from 'convex-helpers/server/sessions';
 import { v } from 'convex/values';
+import type { AuthState } from '../types/auth/AuthState';
 import type { Id } from './_generated/dataModel';
 import { mutation, query } from './_generated/server';
 
