@@ -10,4 +10,31 @@ export default defineSchema({
     currentSlide: v.number(), // The current slide number
     lastUpdated: v.number(), // Timestamp of last update
   }).index('by_key', ['key']),
+
+  // auth
+  users: defineTable(
+    v.union(
+      v.object({
+        type: v.literal('full'),
+        name: v.string(),
+        username: v.string(),
+        email: v.string(),
+      }),
+      v.object({
+        type: v.literal('anonymous'),
+        name: v.string(), //system generated name
+      })
+    )
+  )
+    .index('by_username', ['username'])
+    .index('by_email', ['email']),
+
+  //sessions
+  sessions: defineTable({
+    sessionId: v.string(), //this is provided by the client
+    userId: v.union(v.id('users'), v.null()), // null means session exists but not authenticated
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    expiresAtLabel: v.string(),
+  }).index('by_sessionId', ['sessionId']),
 });

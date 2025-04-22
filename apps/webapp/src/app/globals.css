@@ -120,4 +120,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* add cursor pointer to all buttons */
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
+  }
 }
