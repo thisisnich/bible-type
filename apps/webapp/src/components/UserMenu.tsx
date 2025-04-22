@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthState } from '@/modules/auth/AuthProvider';
 import { api } from '@workspace/backend/convex/_generated/api';
-import { useMutation } from 'convex/react';
+import { useSessionMutation } from 'convex-helpers/react/sessions';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -21,24 +21,16 @@ export function UserMenu() {
   const authState = useAuthState();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const logout = useMutation(api.auth.logout);
+  const logout = useSessionMutation(api.auth.logout);
 
-  // Get session ID from local storage
-  const sessionId = typeof window !== 'undefined' ? localStorage.getItem('sessionId') : null;
-
-  if (!authState || authState.state !== 'authenticated' || !sessionId) {
+  if (!authState || authState.state !== 'authenticated') {
     return null;
   }
 
   const handleLogout = async () => {
-    if (!sessionId) {
-      toast.error('Session ID not available');
-      return;
-    }
-
     setIsLoggingOut(true);
     try {
-      await logout({ sessionId });
+      await logout();
       toast.success('Logged out successfully');
       router.push('/');
     } catch (error) {

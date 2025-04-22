@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { api } from '@workspace/backend/convex/_generated/api';
-import { useMutation } from 'convex/react';
+import { useSessionMutation } from 'convex-helpers/react/sessions';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -11,17 +11,11 @@ import { toast } from 'sonner';
 export function LogoutButton({ sessionId }: { sessionId: string }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const logout = useMutation(api.auth.logout);
+  const logout = useSessionMutation(api.auth.logout);
 
   const handleLogout = async () => {
-    if (!sessionId) {
-      toast.error('Session ID not available');
-      return;
-    }
-
-    setIsLoading(true);
     try {
-      await logout({ sessionId });
+      await logout();
       toast.success('Logged out successfully');
       router.push('/');
     } catch (error) {

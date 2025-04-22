@@ -3,29 +3,21 @@
 import { Button } from '@/components/ui/button';
 import { useAuthState } from '@/modules/auth/AuthProvider';
 import { api } from '@workspace/backend/convex/_generated/api';
-import { useMutation } from 'convex/react';
+import { useSessionMutation } from 'convex-helpers/react/sessions';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 export function NameEditForm() {
   const authState = useAuthState();
-  const updateUserName = useMutation(api.auth.updateUserName);
+  const updateUserName = useSessionMutation(api.auth.updateUserName);
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(authState?.state === 'authenticated' ? authState.user.name : '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get session ID from local storage
-  const sessionId = typeof window !== 'undefined' ? localStorage.getItem('sessionId') : null;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!sessionId) {
-      toast.error('Session ID not available');
-      return;
-    }
 
     if (!name.trim()) {
       setError('Name cannot be empty');
@@ -37,7 +29,6 @@ export function NameEditForm() {
 
     try {
       const result = await updateUserName({
-        sessionId,
         newName: name,
       });
 

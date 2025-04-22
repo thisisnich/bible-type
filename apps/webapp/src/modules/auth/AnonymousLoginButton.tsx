@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { api } from '@workspace/backend/convex/_generated/api';
-import { useMutation } from 'convex/react';
+import { useSessionMutation } from 'convex-helpers/react/sessions';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -11,17 +11,12 @@ import { toast } from 'sonner';
 export const AnonymousLoginButton = ({ sessionId }: { sessionId: string }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const loginAnon = useMutation(api.auth.loginAnon);
+  const loginAnon = useSessionMutation(api.auth.loginAnon);
 
   const handleClick = async () => {
-    if (!sessionId) {
-      toast.error('Session ID not available. Please try again later.');
-      return;
-    }
-
     setIsLoading(true);
     try {
-      await loginAnon({ sessionId });
+      await loginAnon();
       toast.success('Logged in anonymously');
       router.push('/app');
     } catch (error) {
