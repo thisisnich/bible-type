@@ -16,5 +16,10 @@ export const getAuthUser = async (ctx: QueryCtx | MutationCtx, args: { sessionId
   }
 
   const user = await ctx.db.get(session.userId);
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
   return user;
 };
