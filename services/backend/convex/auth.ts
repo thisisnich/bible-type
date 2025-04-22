@@ -105,7 +105,12 @@ export const loginAnon = mutation({
       .withIndex('by_sessionId', (q) => q.eq('sessionId', args.sessionId))
       .first();
 
-    console.log('sessionId', args.sessionId);
+    // Create an anonymous user
+    const anonName = generateAnonUsername();
+    const userId = await ctx.db.insert('users', {
+      type: 'anonymous',
+      name: anonName,
+    });
 
     // Create a new session if it doesn't exist
     let sessionId: Id<'sessions'>;
@@ -115,7 +120,7 @@ export const loginAnon = mutation({
       const expiresAtDate = new Date(expiresAt);
       sessionId = await ctx.db.insert('sessions', {
         sessionId: args.sessionId,
-        userId: null,
+        userId: userId as Id<'users'>,
         createdAt: now,
         expiresAt,
         expiresAtLabel: expiresAtDate.toISOString(),
@@ -123,18 +128,6 @@ export const loginAnon = mutation({
     } else {
       sessionId = existingSession._id;
     }
-
-    // Create an anonymous user
-    const anonName = generateAnonUsername();
-    const userId = await ctx.db.insert('users', {
-      type: 'anonymous',
-      name: anonName,
-    });
-
-    // Link the session to the user
-    await ctx.db.patch(sessionId, {
-      userId,
-    });
 
     return { success: true, userId };
   },
@@ -152,14 +145,9 @@ export const logout = mutation({
       .withIndex('by_sessionId', (q) => q.eq('sessionId', args.sessionId))
       .first();
 
-    if (!existingSession) {
-      return { success: false, reason: 'session_not_found' };
+    if (existingSession) {
+      await ctx.db.delete(existingSession._id);
     }
-
-    // Unlink the user from the session by setting userId to null
-    await ctx.db.patch(existingSession._id, {
-      userId: null,
-    });
 
     return { success: true };
   },

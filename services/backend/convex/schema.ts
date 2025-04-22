@@ -32,7 +32,7 @@ export default defineSchema({
   //sessions
   sessions: defineTable({
     sessionId: v.string(), //this is provided by the client
-    userId: v.union(v.id('users'), v.null()), // null means session exists but not authenticated
+    userId: v.id('users'), // null means session exists but not authenticated
     createdAt: v.number(),
     expiresAt: v.number(),
     expiresAtLabel: v.string(),
