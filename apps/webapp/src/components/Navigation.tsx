@@ -24,43 +24,7 @@ export function Navigation() {
           </Link>
         </div>
         <nav className="flex items-center justify-between w-full">
-          <div className="flex gap-6 text-sm">
-            <Link
-              href="/"
-              className={cn(
-                'transition-colors hover:text-foreground/80',
-                pathname === '/' ? 'text-foreground font-medium' : 'text-foreground/60'
-              )}
-            >
-              Home
-            </Link>
-            {isAuthenticated && (
-              <>
-                <Link
-                  href="/app"
-                  className={cn(
-                    'transition-colors hover:text-foreground/80',
-                    pathname.startsWith('/app')
-                      ? 'text-foreground font-medium'
-                      : 'text-foreground/60'
-                  )}
-                >
-                  App
-                </Link>
-                <Link
-                  href="/profile"
-                  className={cn(
-                    'transition-colors hover:text-foreground/80',
-                    pathname.startsWith('/profile')
-                      ? 'text-foreground font-medium'
-                      : 'text-foreground/60'
-                  )}
-                >
-                  Profile
-                </Link>
-              </>
-            )}
-          </div>
+          <div className="flex gap-6 text-sm">{/* Navigation links removed */}</div>
           <div>
             {isAuthenticated ? (
               <UserMenu />
