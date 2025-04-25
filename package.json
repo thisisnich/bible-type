@@ -33,5 +33,8 @@
   },
   "dependencies": {
     "@radix-ui/react-tooltip": "^1.1.8"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild", "nx", "sharp"]
   }
 }
