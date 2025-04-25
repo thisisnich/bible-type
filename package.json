@@ -11,7 +11,8 @@
     "lint:fix": "biome check --apply .",
     "format": "biome format .",
     "format:fix": "biome format --write .",
-    "typecheck": "pnpm --filter @workspace/webapp --filter @workspace/backend run typecheck"
+    "typecheck": "pnpm --filter @workspace/webapp --filter @workspace/backend run typecheck",
+    "prepare": "husky"
   },
   "lint-staged": {
     "**/*.{ts,tsx,js,jsx,json,md}": [
