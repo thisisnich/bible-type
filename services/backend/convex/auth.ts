@@ -1,5 +1,7 @@
 import { SessionIdArg } from 'convex-helpers/server/sessions';
 import { v } from 'convex/values';
+import { ConvexError } from 'convex/values';
+import { generateLoginCode, getCodeExpirationTime, isCodeExpired } from '../modules/auth/codeUtils';
 import type { AuthState } from '../modules/auth/types/AuthState';
 import type { Id } from './_generated/dataModel';
 import { mutation, query } from './_generated/server';
@@ -210,5 +212,219 @@ export const updateUserName = mutation({
       success: true,
       message: 'Name updated successfully',
     };
+  },
+});
+
+// Get active login code for the current user
+export const getActiveLoginCode = query({
+  args: {
+    ...SessionIdArg,
+  },
+  handler: async (ctx, args) => {
+    // Find the session by sessionId
+    const existingSession = await ctx.db
+      .query('sessions')
+      .withIndex('by_sessionId', (q) => q.eq('sessionId', args.sessionId))
+      .first();
+
+    if (!existingSession || !existingSession.userId) {
+      return { success: false, reason: 'not_authenticated' };
+    }
+
+    const now = Date.now();
+
+    // Find any active code for this user
+    const activeCode = await ctx.db
+      .query('loginCodes')
+      .filter((q) =>
+        q.and(q.eq(q.field('userId'), existingSession.userId), q.gt(q.field('expiresAt'), now))
+      )
+      .first();
+
+    if (!activeCode) {
+      return { success: false, reason: 'no_active_code' };
+    }
+
+    return {
+      success: true,
+      code: activeCode.code,
+      expiresAt: activeCode.expiresAt,
+    };
+  },
+});
+
+// Generate a login code for cross-device authentication
+export const createLoginCode = mutation({
+  args: {
+    ...SessionIdArg,
+  },
+  handler: async (ctx, args) => {
+    // Find the session by sessionId
+    const existingSession = await ctx.db
+      .query('sessions')
+      .withIndex('by_sessionId', (q) => q.eq('sessionId', args.sessionId))
+      .first();
+
+    if (!existingSession || !existingSession.userId) {
+      throw new ConvexError({
+        code: 'UNAUTHORIZED',
+        message: 'You must be logged in to generate a login code',
+      });
+    }
+
+    // Get the user
+    const user = await ctx.db.get(existingSession.userId);
+    if (!user) {
+      throw new ConvexError({
+        code: 'NOT_FOUND',
+        message: 'User not found',
+      });
+    }
+
+    const now = Date.now();
+
+    // Delete any existing active codes for this user
+    const existingCodes = await ctx.db
+      .query('loginCodes')
+      .filter((q) => q.eq(q.field('userId'), existingSession.userId))
+      .collect();
+
+    // Delete all existing codes for this user
+    for (const code of existingCodes) {
+      await ctx.db.delete(code._id);
+    }
+
+    // Generate a new login code
+    const codeString = generateLoginCode();
+    const expiresAt = getCodeExpirationTime();
+
+    // Store the code in the database
+    await ctx.db.insert('loginCodes', {
+      code: codeString,
+      userId: existingSession.userId,
+      createdAt: now,
+      expiresAt,
+    });
+
+    return {
+      success: true,
+      code: codeString,
+      expiresAt,
+    };
+  },
+});
+
+// Verify and use a login code
+export const verifyLoginCode = mutation({
+  args: {
+    code: v.string(),
+    ...SessionIdArg,
+  },
+  handler: async (ctx, args) => {
+    // Clean up the code (removing dashes if any)
+    const cleanCode = args.code.replace(/-/g, '').toUpperCase();
+
+    // Find the login code
+    const loginCode = await ctx.db
+      .query('loginCodes')
+      .withIndex('by_code', (q) => q.eq('code', cleanCode))
+      .first();
+
+    if (!loginCode) {
+      return {
+        success: false,
+        reason: 'invalid_code',
+        message: 'Invalid login code',
+      };
+    }
+
+    // Check if the code is expired
+    if (isCodeExpired(loginCode.expiresAt)) {
+      // Delete the expired code
+      await ctx.db.delete(loginCode._id);
+      return {
+        success: false,
+        reason: 'code_expired',
+        message: 'This login code has expired',
+      };
+    }
+
+    // Get the user associated with the code
+    const user = await ctx.db.get(loginCode.userId);
+    if (!user) {
+      return {
+        success: false,
+        reason: 'user_not_found',
+        message: 'User not found',
+      };
+    }
+
+    // Delete the code once used
+    await ctx.db.delete(loginCode._id);
+
+    // Check if the session exists
+    const existingSession = await ctx.db
+      .query('sessions')
+      .withIndex('by_sessionId', (q) => q.eq('sessionId', args.sessionId))
+      .first();
+
+    // Create or update session
+    const now = Date.now();
+    const expiresAt = now + 30 * 24 * 60 * 60 * 1000; // 30 days from now
+    const expiresAtDate = new Date(expiresAt);
+
+    if (existingSession) {
+      // Update existing session to point to the user
+      await ctx.db.patch(existingSession._id, {
+        userId: loginCode.userId,
+        expiresAt,
+        expiresAtLabel: expiresAtDate.toISOString(),
+      });
+    } else {
+      // Create a new session
+      await ctx.db.insert('sessions', {
+        sessionId: args.sessionId,
+        userId: loginCode.userId,
+        createdAt: now,
+        expiresAt,
+        expiresAtLabel: expiresAtDate.toISOString(),
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Login successful',
+      user,
+    };
+  },
+});
+
+// Check if a login code is still valid (not used and not expired)
+export const checkCodeValidity = query({
+  args: {
+    code: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Clean up the code (removing dashes if any)
+    const cleanCode = args.code.replace(/-/g, '').toUpperCase();
+
+    // Find the login code
+    const loginCode = await ctx.db
+      .query('loginCodes')
+      .withIndex('by_code', (q) => q.eq('code', cleanCode))
+      .first();
+
+    // If the code doesn't exist, it's not valid
+    if (!loginCode) {
+      return false;
+    }
+
+    // Check if the code is expired
+    if (isCodeExpired(loginCode.expiresAt)) {
+      return false;
+    }
+
+    // The code exists and is not expired, so it's valid
+    return true;
   },
 });
