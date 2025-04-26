@@ -4,18 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AnonymousLoginButton } from '@/modules/auth/AnonymousLoginButton';
 import { useAuthState } from '@/modules/auth/AuthProvider';
-import { LoginWithCode } from '@/modules/auth/LoginWithCode';
+import { KeyRound } from 'lucide-react';
 import { Mail } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
   const authState = useAuthState();
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
-  // Get session ID for anonymous login
-  const sessionId = useMemo(() => {
-    return typeof window !== 'undefined' ? localStorage.getItem('sessionId') : null;
+  // Get session ID for anonymous login - moved to useEffect to avoid hydration mismatch
+  useEffect(() => {
+    setSessionId(localStorage.getItem('sessionId'));
   }, []);
 
   // Redirect authenticated users to app
@@ -35,7 +37,18 @@ export default function LoginPage() {
 
         <div className="space-y-4">
           <Card className="p-6">
-            <LoginWithCode />
+            <div className="space-y-4">
+              <div className="text-center mb-2">
+                <h3 className="text-lg font-semibold">Login with Code</h3>
+                <p className="text-sm text-gray-500">Use a code from your other device</p>
+              </div>
+              <Link href="/login/code">
+                <Button className="w-full" aria-label="Go to login with code page">
+                  <KeyRound className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Enter Login Code
+                </Button>
+              </Link>
+            </div>
           </Card>
 
           <div className="relative">
