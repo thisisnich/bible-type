@@ -1,4 +1,5 @@
 'use client';
+import { generateUUID } from '@/lib/utils';
 import { api } from '@workspace/backend/convex/_generated/api';
 import type { AuthState } from '@workspace/backend/modules/auth/types/AuthState';
 import { SessionProvider, type UseStorage, useSessionQuery } from 'convex-helpers/react/sessions';
@@ -21,7 +22,11 @@ export const useAuthState = () => {
 function withSessionProvider(Component: React.ComponentType<any>) {
   return (props: { children: React.ReactNode }) => {
     return (
-      <SessionProvider storageKey="sessionId" useStorage={useLocalStorage}>
+      <SessionProvider
+        storageKey="sessionId"
+        useStorage={useLocalStorage}
+        idGenerator={generateUUID}
+      >
         <Component {...props} />
       </SessionProvider>
     );
