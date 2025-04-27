@@ -11,6 +11,7 @@ export function Navigation() {
   const pathname = usePathname();
   const authState = useAuthState();
   const isAuthenticated = authState?.state === 'authenticated';
+  const isLoading = authState === undefined;
 
   // Get session ID from local storage
   const sessionId = typeof window !== 'undefined' ? localStorage.getItem('sessionId') : null;
@@ -26,15 +27,16 @@ export function Navigation() {
         <nav className="flex items-center justify-between w-full">
           <div className="flex gap-6 text-sm">{/* Navigation links removed */}</div>
           <div>
-            {isAuthenticated ? (
-              <UserMenu />
-            ) : (
-              <Link href="/login">
-                <Button size="sm" variant="outline">
-                  Login
-                </Button>
-              </Link>
-            )}
+            {!isLoading &&
+              (isAuthenticated ? (
+                <UserMenu />
+              ) : (
+                <Link href="/login">
+                  <Button size="sm" variant="outline">
+                    Login
+                  </Button>
+                </Link>
+              ))}
           </div>
         </nav>
       </div>

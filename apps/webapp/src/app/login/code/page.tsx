@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuthState } from '@/modules/auth/AuthProvider';
 import { LoginWithCode } from '@/modules/auth/LoginWithCode';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo } from 'react';
@@ -11,6 +12,7 @@ import { useEffect, useMemo } from 'react';
 export default function LoginCodePage() {
   const router = useRouter();
   const authState = useAuthState();
+  const isLoading = authState === undefined;
 
   // Check if user is authenticated
   const isAuthenticated = useMemo(() => {
@@ -23,6 +25,17 @@ export default function LoginCodePage() {
       router.push('/app');
     }
   }, [isAuthenticated, router]);
+
+  if (isLoading) {
+    return (
+      <main className="flex items-center justify-center min-h-screen p-4">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex items-center justify-center min-h-screen p-4">
