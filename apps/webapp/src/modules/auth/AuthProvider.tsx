@@ -19,7 +19,7 @@ export const useAuthState = () => {
   return authState;
 };
 
-function withSessionProvider(Component: React.ComponentType<any>) {
+function withSessionProvider(Component: React.ComponentType<{ children: React.ReactNode }>) {
   return (props: { children: React.ReactNode }) => {
     return (
       <SessionProvider
