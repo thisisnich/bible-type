@@ -31,7 +31,8 @@ export default defineSchema({
     )
   )
     .index('by_username', ['username'])
-    .index('by_email', ['email']),
+    .index('by_email', ['email'])
+    .index('by_name', ['name']),
 
   //sessions
   sessions: defineTable({
