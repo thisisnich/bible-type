@@ -29,7 +29,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.5.0",
     "nx": "^20.6.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "@types/node": "^20.17.24"
   },
   "dependencies": {
     "@radix-ui/react-tooltip": "^1.1.8"
