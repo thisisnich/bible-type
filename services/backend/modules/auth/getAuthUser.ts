@@ -10,7 +10,7 @@ export const getAuthUser = async (ctx: QueryCtx | MutationCtx, args: { sessionId
     throw new Error('Session not found');
   }
 
-  const isExpired = session.expiresAt < Date.now();
+  const isExpired = session.expiresAt && session.expiresAt < Date.now();
   if (isExpired) {
     throw new Error('Session expired');
   }

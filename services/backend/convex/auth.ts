@@ -3,8 +3,16 @@ import { v } from 'convex/values';
 import { ConvexError } from 'convex/values';
 import { generateLoginCode, getCodeExpirationTime, isCodeExpired } from '../modules/auth/codeUtils';
 import type { AuthState } from '../modules/auth/types/AuthState';
-import type { Id } from './_generated/dataModel';
-import { mutation, query } from './_generated/server';
+import { api, internal } from './_generated/api';
+import type { Doc, Id } from './_generated/dataModel';
+import {
+  type ActionCtx,
+  action,
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from './_generated/server';
 
 // Helper function to generate random anonymous usernames
 const generateAnonUsername = (): string => {
@@ -118,14 +126,11 @@ export const loginAnon = mutation({
     let sessionId: Id<'sessions'>;
     if (!existingSession) {
       const now = Date.now();
-      const expiresAt = now + 30 * 24 * 60 * 60 * 1000; // 30 days from now
-      const expiresAtDate = new Date(expiresAt);
       sessionId = await ctx.db.insert('sessions', {
         sessionId: args.sessionId,
         userId: userId as Id<'users'>,
         createdAt: now,
-        expiresAt,
-        expiresAtLabel: expiresAtDate.toISOString(),
+        expiresAt: undefined, //no expiration
       });
     } else {
       sessionId = existingSession._id;
@@ -370,15 +375,15 @@ export const verifyLoginCode = mutation({
 
     // Create or update session
     const now = Date.now();
-    const expiresAt = now + 30 * 24 * 60 * 60 * 1000; // 30 days from now
-    const expiresAtDate = new Date(expiresAt);
+    // const expiresAt = now + 30 * 24 * 60 * 60 * 1000; // 30 days from now
+    // const expiresAtDate = new Date(expiresAt);
 
     if (existingSession) {
       // Update existing session to point to the user
       await ctx.db.patch(existingSession._id, {
         userId: loginCode.userId,
-        expiresAt,
-        expiresAtLabel: expiresAtDate.toISOString(),
+        // expiresAt,
+        // expiresAtLabel: expiresAtDate.toISOString(),
       });
     } else {
       // Create a new session
@@ -386,8 +391,8 @@ export const verifyLoginCode = mutation({
         sessionId: args.sessionId,
         userId: loginCode.userId,
         createdAt: now,
-        expiresAt,
-        expiresAtLabel: expiresAtDate.toISOString(),
+        // expiresAt,
+        // expiresAtLabel: expiresAtDate.toISOString(),
       });
     }
 
@@ -426,5 +431,209 @@ export const checkCodeValidity = query({
 
     // The code exists and is not expired, so it's valid
     return true;
+  },
+});
+
+// Helper internal query to get a session by sessionId
+export const getSessionBySessionId = internalQuery({
+  args: { sessionId: v.string() },
+  handler: async (ctx, args): Promise<Doc<'sessions'> | null> => {
+    return await ctx.db
+      .query('sessions')
+      .withIndex('by_sessionId', (q) => q.eq('sessionId', args.sessionId))
+      .first();
+  },
+});
+
+// Helper internal query to get a user by ID
+export const getUserById = internalQuery({
+  args: { userId: v.id('users') },
+  handler: async (ctx, args): Promise<Doc<'users'> | null> => {
+    return await ctx.db.get(args.userId);
+  },
+});
+
+// Helper internal query to find a user by recovery code
+export const getUserByRecoveryCode = internalQuery({
+  args: { recoveryCode: v.string() },
+  handler: async (ctx, args): Promise<Doc<'users'> | null> => {
+    return await ctx.db
+      .query('users')
+      .filter((q) => q.eq(q.field('recoveryCode'), args.recoveryCode))
+      .first();
+  },
+});
+
+// Helper internal mutation to add or update a recovery code on a user
+export const updateUserRecoveryCode = internalMutation({
+  args: { userId: v.id('users'), recoveryCode: v.string() },
+  handler: async (ctx, args): Promise<void> => {
+    await ctx.db.patch(args.userId, { recoveryCode: args.recoveryCode });
+  },
+});
+
+// Helper internal mutation to create a new session for a user
+export const createSession = internalMutation({
+  args: {
+    sessionId: v.string(),
+    userId: v.id('users'),
+    createdAt: v.number(),
+    expiresAt: v.optional(v.number()),
+    expiresAtLabel: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<Id<'sessions'>> => {
+    return await ctx.db.insert('sessions', {
+      sessionId: args.sessionId,
+      userId: args.userId,
+      createdAt: args.createdAt,
+      expiresAt: args.expiresAt,
+      expiresAtLabel: args.expiresAtLabel,
+    });
+  },
+});
+
+// Helper internal mutation to update an existing session
+export const updateSession = internalMutation({
+  args: {
+    sessionId: v.id('sessions'),
+    userId: v.id('users'),
+    expiresAt: v.optional(v.number()),
+    expiresAtLabel: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<void> => {
+    await ctx.db.patch(args.sessionId, {
+      userId: args.userId,
+      expiresAt: args.expiresAt,
+      expiresAtLabel: args.expiresAtLabel,
+    });
+  },
+});
+
+// Action: Get or create a recovery code for the current user
+export const getOrCreateRecoveryCode = action({
+  args: { ...SessionIdArg },
+  handler: async (
+    ctx: ActionCtx,
+    args: { sessionId: string }
+  ): Promise<{ success: boolean; recoveryCode?: string; reason?: string }> => {
+    // Find the session by sessionId
+    const existingSession = await ctx.runQuery(internal.auth.getSessionBySessionId, {
+      sessionId: args.sessionId,
+    });
+
+    if (!existingSession || !existingSession.userId) {
+      return { success: false, reason: 'not_authenticated' };
+    }
+
+    // Get the user
+    const user = await ctx.runQuery(internal.auth.getUserById, {
+      userId: existingSession.userId,
+    });
+
+    if (!user) {
+      return { success: false, reason: 'user_not_found' };
+    }
+
+    // If user already has a recovery code, return it
+    if (user.recoveryCode) {
+      return { success: true, recoveryCode: user.recoveryCode };
+    }
+
+    // Otherwise, generate a new recovery code using the crypto action
+    const code: string = await ctx.runAction(api.crypto.generateRecoveryCode, { length: 128 });
+    await ctx.runMutation(internal.auth.updateUserRecoveryCode, {
+      userId: existingSession.userId,
+      recoveryCode: code,
+    });
+
+    return { success: true, recoveryCode: code };
+  },
+});
+
+// Action: Verify a recovery code and return the user if valid
+export const verifyRecoveryCode = action({
+  args: { recoveryCode: v.string(), ...SessionIdArg },
+  handler: async (
+    ctx: ActionCtx,
+    args: { recoveryCode: string; sessionId: string }
+  ): Promise<{ success: boolean; user?: Doc<'users'>; reason?: string }> => {
+    // Find the user with the given recovery code
+    const user = await ctx.runQuery(internal.auth.getUserByRecoveryCode, {
+      recoveryCode: args.recoveryCode,
+    });
+
+    if (!user) {
+      return { success: false, reason: 'invalid_code' };
+    }
+
+    // Check if the session exists
+    const existingSession = await ctx.runQuery(internal.auth.getSessionBySessionId, {
+      sessionId: args.sessionId,
+    });
+
+    // Create or update session
+    const now = Date.now();
+    // const expiresAt = now + 30 * 24 * 60 * 60 * 1000; // 30 days from now
+    // const expiresAtDate = new Date(expiresAt);
+
+    if (existingSession) {
+      // Update existing session to point to the user
+      await ctx.runMutation(internal.auth.updateSession, {
+        sessionId: existingSession._id,
+        userId: user._id,
+        // expiresAt,
+        // expiresAtLabel: expiresAtDate.toISOString(),
+      });
+    } else {
+      // Create a new session
+      await ctx.runMutation(internal.auth.createSession, {
+        sessionId: args.sessionId,
+        userId: user._id,
+        createdAt: now,
+        // expiresAt,
+        // expiresAtLabel: expiresAtDate.toISOString(),
+      });
+    }
+
+    return {
+      success: true,
+      user,
+    };
+  },
+});
+
+// Action: Regenerate a new recovery code for the current user (invalidates the old one)
+export const regenerateRecoveryCode = action({
+  args: { ...SessionIdArg },
+  handler: async (
+    ctx: ActionCtx,
+    args: { sessionId: string }
+  ): Promise<{ success: boolean; recoveryCode?: string; reason?: string }> => {
+    // Find the session by sessionId
+    const existingSession = await ctx.runQuery(internal.auth.getSessionBySessionId, {
+      sessionId: args.sessionId,
+    });
+
+    if (!existingSession || !existingSession.userId) {
+      return { success: false, reason: 'not_authenticated' };
+    }
+
+    // Get the user
+    const user = await ctx.runQuery(internal.auth.getUserById, {
+      userId: existingSession.userId,
+    });
+
+    if (!user) {
+      return { success: false, reason: 'user_not_found' };
+    }
+
+    // Generate a new recovery code using the crypto action
+    const code: string = await ctx.runAction(api.crypto.generateRecoveryCode, { length: 128 });
+    await ctx.runMutation(internal.auth.updateUserRecoveryCode, {
+      userId: existingSession.userId,
+      recoveryCode: code,
+    });
+
+    return { success: true, recoveryCode: code };
   },
 });

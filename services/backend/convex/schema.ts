@@ -19,10 +19,12 @@ export default defineSchema({
         name: v.string(),
         username: v.string(),
         email: v.string(),
+        recoveryCode: v.optional(v.string()),
       }),
       v.object({
         type: v.literal('anonymous'),
         name: v.string(), //system generated name
+        recoveryCode: v.optional(v.string()),
       })
     )
   )
@@ -34,8 +36,8 @@ export default defineSchema({
     sessionId: v.string(), //this is provided by the client
     userId: v.id('users'), // null means session exists but not authenticated
     createdAt: v.number(),
-    expiresAt: v.number(),
-    expiresAtLabel: v.string(),
+    expiresAt: v.optional(v.number()),
+    expiresAtLabel: v.optional(v.string()),
   }).index('by_sessionId', ['sessionId']),
 
   //login codes for cross-device authentication

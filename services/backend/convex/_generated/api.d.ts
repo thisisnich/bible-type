@@ -16,6 +16,8 @@ import type {
 import type * as appinfo from "../appinfo.js";
 import type * as auth from "../auth.js";
 import type * as cleanupTasks from "../cleanupTasks.js";
+import type * as crypto from "../crypto.js";
+import type * as migration from "../migration.js";
 import type * as presentations from "../presentations.js";
 
 /**
@@ -30,6 +32,8 @@ declare const fullApi: ApiFromModules<{
   appinfo: typeof appinfo;
   auth: typeof auth;
   cleanupTasks: typeof cleanupTasks;
+  crypto: typeof crypto;
+  migration: typeof migration;
   presentations: typeof presentations;
 }>;
 export declare const api: FilterApi<

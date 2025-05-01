@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AnonymousLoginButton } from '@/modules/auth/AnonymousLoginButton';
 import { useAuthState } from '@/modules/auth/AuthProvider';
-import { KeyRound, Loader2, Mail } from 'lucide-react';
+import { KeyRound, KeySquare, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -62,32 +62,22 @@ export default function LoginPage() {
             </div>
           </Card>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+          {sessionId && (
+            <div className="pt-2">
+              <AnonymousLoginButton sessionId={sessionId} />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">Or continue with</span>
-            </div>
-          </div>
+          )}
 
-          <div className="space-y-4">
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              disabled
-              aria-disabled="true"
-              aria-label="Login with email (coming soon)"
+          {/* Recovery link - subtle version */}
+          <div className="pt-6 text-center">
+            <Link
+              href="/recover"
+              className="inline-flex items-center text-xs text-gray-500 hover:text-gray-700 transition-colors"
+              aria-label="Recover your anonymous account"
             >
-              <Mail className="mr-2 h-4 w-4" aria-hidden="true" />
-              Login with Email (Coming Soon)
-            </Button>
-
-            {sessionId && (
-              <div className="pt-2">
-                <AnonymousLoginButton sessionId={sessionId} />
-              </div>
-            )}
+              <KeySquare className="mr-1 h-3 w-3" aria-hidden="true" />
+              Lost access to your anonymous account?
+            </Link>
           </div>
         </div>
       </div>
