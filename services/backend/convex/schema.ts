@@ -1,6 +1,8 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
+// DEPRECATION NOTICE: The fields `expiresAt` and `expiresAtLabel` in the sessions table are deprecated and no longer used for session expiry. They are only kept for migration compatibility and will be removed in a future migration.
+
 export default defineSchema({
   appInfo: defineTable({
     latestVersion: v.string(),
@@ -36,8 +38,8 @@ export default defineSchema({
     sessionId: v.string(), //this is provided by the client
     userId: v.id('users'), // null means session exists but not authenticated
     createdAt: v.number(),
-    expiresAt: v.optional(v.number()),
-    expiresAtLabel: v.optional(v.string()),
+    expiresAt: v.optional(v.number()), // DEPRECATED: No longer used for session expiry. Kept for migration compatibility.
+    expiresAtLabel: v.optional(v.string()), // DEPRECATED: No longer used for session expiry. Kept for migration compatibility.
   }).index('by_sessionId', ['sessionId']),
 
   //login codes for cross-device authentication

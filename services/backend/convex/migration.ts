@@ -1,6 +1,5 @@
 import { v } from 'convex/values';
-import { api, internal } from './_generated/api';
-import type { Id } from './_generated/dataModel';
+import { internal } from './_generated/api';
 import { internalAction, internalMutation, internalQuery } from './_generated/server';
 
 const BATCH_SIZE = 100; // Process 100 sessions per batch

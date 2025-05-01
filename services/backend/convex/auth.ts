@@ -130,7 +130,6 @@ export const loginAnon = mutation({
         sessionId: args.sessionId,
         userId: userId as Id<'users'>,
         createdAt: now,
-        expiresAt: undefined, //no expiration
       });
     } else {
       sessionId = existingSession._id;
@@ -375,15 +374,11 @@ export const verifyLoginCode = mutation({
 
     // Create or update session
     const now = Date.now();
-    // const expiresAt = now + 30 * 24 * 60 * 60 * 1000; // 30 days from now
-    // const expiresAtDate = new Date(expiresAt);
 
     if (existingSession) {
       // Update existing session to point to the user
       await ctx.db.patch(existingSession._id, {
         userId: loginCode.userId,
-        // expiresAt,
-        // expiresAtLabel: expiresAtDate.toISOString(),
       });
     } else {
       // Create a new session
@@ -391,8 +386,6 @@ export const verifyLoginCode = mutation({
         sessionId: args.sessionId,
         userId: loginCode.userId,
         createdAt: now,
-        // expiresAt,
-        // expiresAtLabel: expiresAtDate.toISOString(),
       });
     }
 
@@ -478,16 +471,12 @@ export const createSession = internalMutation({
     sessionId: v.string(),
     userId: v.id('users'),
     createdAt: v.number(),
-    expiresAt: v.optional(v.number()),
-    expiresAtLabel: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<Id<'sessions'>> => {
     return await ctx.db.insert('sessions', {
       sessionId: args.sessionId,
       userId: args.userId,
       createdAt: args.createdAt,
-      expiresAt: args.expiresAt,
-      expiresAtLabel: args.expiresAtLabel,
     });
   },
 });
@@ -497,14 +486,10 @@ export const updateSession = internalMutation({
   args: {
     sessionId: v.id('sessions'),
     userId: v.id('users'),
-    expiresAt: v.optional(v.number()),
-    expiresAtLabel: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<void> => {
     await ctx.db.patch(args.sessionId, {
       userId: args.userId,
-      expiresAt: args.expiresAt,
-      expiresAtLabel: args.expiresAtLabel,
     });
   },
 });
@@ -573,16 +558,12 @@ export const verifyRecoveryCode = action({
 
     // Create or update session
     const now = Date.now();
-    // const expiresAt = now + 30 * 24 * 60 * 60 * 1000; // 30 days from now
-    // const expiresAtDate = new Date(expiresAt);
 
     if (existingSession) {
       // Update existing session to point to the user
       await ctx.runMutation(internal.auth.updateSession, {
         sessionId: existingSession._id,
         userId: user._id,
-        // expiresAt,
-        // expiresAtLabel: expiresAtDate.toISOString(),
       });
     } else {
       // Create a new session
@@ -590,8 +571,6 @@ export const verifyRecoveryCode = action({
         sessionId: args.sessionId,
         userId: user._id,
         createdAt: now,
-        // expiresAt,
-        // expiresAtLabel: expiresAtDate.toISOString(),
       });
     }
 
