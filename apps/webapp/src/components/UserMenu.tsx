@@ -87,7 +87,7 @@ export function UserMenu() {
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <Link href="/profile">
+          <Link href="/app/profile">
             <DropdownMenuItem className="cursor-pointer">Profile</DropdownMenuItem>
           </Link>
           <Link href="/app">
