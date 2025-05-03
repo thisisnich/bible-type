@@ -95,6 +95,27 @@ function setupWebappEnv(convexUrl) {
   fs.writeFileSync(webappEnvPath, envContent);
 }
 
+/**
+ * Add upstream remote repository
+ */
+function addUpstreamRemote() {
+  console.log('🔗 Checking for existing upstream remote repository...');
+  try {
+    const remotes = execSync('git remote -v').toString();
+    if (remotes.includes('upstream')) {
+      console.log('⚠️ Upstream remote already exists. Skipping this step.');
+      return;
+    }
+
+    execSync('git remote add upstream https://github.com/conradkoh/next-convex-starter-app', {
+      stdio: 'inherit',
+    });
+    console.log('✅ Upstream remote added successfully.');
+  } catch (error) {
+    console.error('❌ Error adding upstream remote:', error.message);
+  }
+}
+
 // Main function to run the setup
 function setup() {
   console.log('🚀 Starting project setup...');
@@ -110,6 +131,9 @@ function setup() {
   } else {
     console.log('✅ Backend .env.local already exists.');
   }
+
+  // Add upstream remote repository
+  addUpstreamRemote();
 
   // Continue with the rest of the setup
   continueSetup();
