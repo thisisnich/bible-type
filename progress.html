@@ -32,7 +32,33 @@
         Please specify the technologies and frameworks used in this project.
       </p>
       <ul>
-        <li><!-- Insert tech stack here --></li>
+        <li>Frontend:
+          <ul>
+            <li>Next.js 15.3.1 (App Router)</li>
+            <li>React 19</li>
+            <li>TypeScript</li>
+            <li>TailwindCSS 4</li>
+            <li>Shadcn UI components library</li>
+          </ul>
+        </li>
+        <li>Backend:
+          <ul>
+            <li>Convex (serverless backend platform)</li>
+            <li>TypeScript</li>
+          </ul>
+        </li>
+        <li>Package Management:
+          <ul>
+            <li>PNPM Workspaces</li>
+            <li>NX for monorepo management</li>
+          </ul>
+        </li>
+        <li>Tools:
+          <ul>
+            <li>Biome (linting and formatting)</li>
+            <li>Husky (git hooks)</li>
+          </ul>
+        </li>
       </ul>
     </section>
 
@@ -91,15 +117,29 @@
     -->
       <h3>Directory Structure</h3>
       <pre>
-      <!-- Insert project folder structure here -->
-    </pre>
-
-      <h3>Route Design</h3>
-      <ul>
-        <li><strong>/app/...</strong> - All routes that require authentication should begin with /app/</li>
-        <li><strong>/</strong> - Root path and all other paths (except /app) serve public content</li>
-      </ul>
-    </section>
+/
+├── apps/
+│   └── webapp/                    # Frontend Next.js application
+│       ├── public/                # Static assets
+│       └── src/
+│           ├── app/               # Next.js App Router pages 
+│           │   ├── app/           # Authentication required routes (protected)
+│           │   │   └── ...        # All authenticated routes nested here
+│           │   └── ...            # Public routes (no authentication required)
+│           ├── components/        # UI components
+│           ├── lib/               # Utility functions
+│           └── modules/           # Feature-specific modules
+│
+├── services/
+│   └── backend/                   # Backend service
+│       └── convex/                # Convex backend
+│           ├── _generated/        # Auto-generated Convex files
+│           ├── auth.ts            # Authentication logic
+│           ├── schema.ts          # Database schema
+│           └── ...                # Other Convex functions
+│
+└── docs/                          # Documentation
+      </pre>
 
     <section id="process">
       <h2>Process</h2>
