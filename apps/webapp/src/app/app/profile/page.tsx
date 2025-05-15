@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { DarkModeToggle } from '@/components/ui/dark-mode';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuthState } from '@/modules/auth/AuthProvider';
 import { LoginCodeGenerator } from '@/modules/auth/LoginCodeGenerator';
@@ -196,6 +197,10 @@ export default function ProfilePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
+        <div className="flex justify-end mb-6">
+          <DarkModeToggle />
+        </div>
+
         <Card className="p-6 mb-6">
           <h1 className="text-2xl font-bold mb-6">Your Profile</h1>
 

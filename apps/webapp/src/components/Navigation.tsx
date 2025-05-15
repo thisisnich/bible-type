@@ -21,7 +21,7 @@ export function Navigation() {
       <div className="flex h-16 items-center px-4 sm:px-6">
         <div className="mr-6 flex">
           <Link href="/" className="flex items-center whitespace-nowrap">
-            <span className="font-bold text-lg">Next Convex</span>
+            <span className="font-bold text-lg">Bible Type</span>
           </Link>
         </div>
         <nav className="flex items-center justify-between w-full">

@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as appinfo from "../appinfo.js";
 import type * as auth from "../auth.js";
+import type * as bible from "../bible.js";
 import type * as cleanupTasks from "../cleanupTasks.js";
 import type * as crypto from "../crypto.js";
 import type * as migration from "../migration.js";
@@ -32,6 +33,7 @@ import type * as serviceDesk from "../serviceDesk.js";
 declare const fullApi: ApiFromModules<{
   appinfo: typeof appinfo;
   auth: typeof auth;
+  bible: typeof bible;
   cleanupTasks: typeof cleanupTasks;
   crypto: typeof crypto;
   migration: typeof migration;
