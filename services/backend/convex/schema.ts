@@ -52,6 +52,7 @@ export default defineSchema({
   }).index('by_code', ['code']),
 
   typingHistory: defineTable({
+    // sessionId: v.string(), // The session ID of the user
     userId: v.id('users'), // The user who typed
     timestamp: v.number(), // When the typing happened
     wpm: v.number(), // Words per minute

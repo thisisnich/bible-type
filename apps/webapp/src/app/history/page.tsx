@@ -60,14 +60,6 @@ export default function AppPage() {
                 </div>
               )}
 
-              {/* Bible Selector Component */}
-              <CustomBibleSelector onVerseSelect={handleVerseSelect} />
-
-              {/* Typing Interface */}
-              <div className="p-4 bg-gray-100 rounded-md">
-                <CustomTypingInterface verse={selectedVerse} />
-              </div>
-
               {/* History Section */}
               <div className="mt-8">
                 <h2 className="text-xl font-semibold mb-4">Your BibleType Activity</h2>

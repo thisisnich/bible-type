@@ -1,4 +1,6 @@
+import { SessionIdArg } from 'convex-helpers/server/sessions';
 import { v } from 'convex/values';
+import { getAuthUser } from '../modules/auth/getAuthUser';
 import { api } from './_generated/api';
 import type { Id } from './_generated/dataModel';
 import { action, mutation, query } from './_generated/server';
@@ -19,7 +21,7 @@ type VerseData = {
 } | null;
 
 type CachedVerse = {
-  id: string; // <-- Changed verseId to id to match VerseData structure
+  id: string;
   bibleId: string;
   content: string;
   reference: string;
@@ -259,66 +261,52 @@ export const cacheVerse = mutation({
   },
 });
 
-// Function to save typing result to the database
+// Updated to use SessionIdArg like in budgets.ts
 export const saveTypingResult = mutation({
   args: {
+    ...SessionIdArg,
     verseId: v.string(),
     wpm: v.number(),
     accuracy: v.number(),
     translation: v.string(),
     reference: v.string(),
-    content: v.optional(v.string()),
-    bookId: v.optional(v.string()),
-    chapterId: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<string> => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error('Not authenticated');
-
-    // If we don't have content, bookId, or chapterId in the args,
-    // try to get them from the cached verse
-    let content = args.content;
-    let bookId = args.bookId;
-    let chapterId = args.chapterId;
-
-    if (!content || !bookId || !chapterId) {
-      const cachedVerse = await ctx.db
-        .query('cachedVerses')
-        .withIndex('by_verse', (q) => q.eq('verseId', args.verseId).eq('bibleId', args.translation))
-        .first();
-
-      if (cachedVerse) {
-        content = content || cachedVerse.content;
-        bookId = bookId || cachedVerse.bookId;
-        chapterId = chapterId || cachedVerse.chapterId;
-      }
+    // Get authenticated user using same pattern as in budgets.ts
+    const user = await getAuthUser(ctx, args);
+    if (!user) {
+      throw new Error('Unauthorized');
     }
 
     const id = await ctx.db.insert('typingHistory', {
-      userId: identity.subject as Id<'users'>,
+      userId: user._id,
       timestamp: Date.now(),
       verseId: args.verseId,
       wpm: args.wpm,
       accuracy: args.accuracy,
       translation: args.translation,
       reference: args.reference,
-      content: content,
-      bookId: bookId,
-      chapterId: chapterId,
     });
 
     return id;
   },
 });
+
+// Updated to use SessionIdArg like in budgets.ts
 export const getTypingHistory = query({
-  args: {},
-  handler: async (ctx): Promise<TypingHistory> => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+  args: {
+    ...SessionIdArg,
+  },
+  handler: async (ctx, args): Promise<TypingHistory> => {
+    // Get authenticated user using same pattern as in budgets.ts
+    const user = await getAuthUser(ctx, args);
+    if (!user) {
+      return [];
+    }
 
     const results = await ctx.db
       .query('typingHistory')
-      .withIndex('by_user', (q) => q.eq('userId', identity.subject as Id<'users'>))
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
       .order('desc')
       .take(10);
 

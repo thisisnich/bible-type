@@ -1,6 +1,7 @@
 import { api } from '@workspace/backend/convex/_generated/api';
-import { useMutation } from 'convex/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSessionMutation } from 'convex-helpers/react/sessions';
+import { SessionIdArg } from 'convex-helpers/server/sessions';
+import { useCallback, useEffect, useState } from 'react';
 
 // Define Bible verse structure
 type BibleVerse = {
@@ -20,7 +21,6 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
   const [isComplete, setIsComplete] = useState(false);
   const [progress, setProgress] = useState(0);
   const [resultSaved, setResultSaved] = useState(false);
-  const saveResultRef = useRef(false);
 
   // Clean up the verse content for typing - bible-api.com returns plain text already
   const getCleanText = useCallback((text: string) => {
@@ -35,7 +35,8 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
     ? getCleanText(verse.content)
     : 'Please select a Bible verse to start typing.';
 
-  const saveResult = useMutation(api.bible.saveTypingResult);
+  // Use the same session mutation pattern as seen in BudgetForm
+  const saveResult = useSessionMutation(api.bible.saveTypingResult);
 
   // Reset typing state when verse changes
   // biome-ignore lint/correctness/useExhaustiveDependencies: This is a controlled effect
@@ -66,6 +67,7 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
     (text: string) => {
       if (!verse) return false;
 
+      // Check if we've typed the full target text
       return text.length >= targetText.length;
     },
     [targetText, verse]
@@ -73,26 +75,27 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
 
   // Effect to save results when typing is complete
   useEffect(() => {
-    if (isComplete && verse && !resultSaved && saveResultRef.current) {
-      // Save the typing result to the database with all relevant verse info
-      saveResult({
-        verseId: verse.id,
-        wpm,
-        accuracy,
-        translation: verse.bibleId || 'unknown',
-        reference: verse.reference,
-        content: verse.content,
-        bookId: verse.bookId,
-        chapterId: verse.chapterId,
-      })
-        .then(() => {
+    const saveTypingResult = async () => {
+      if (isComplete && verse && !resultSaved) {
+        try {
+          // Save the typing result to the database with all relevant verse info
+          await saveResult({
+            verseId: verse.id,
+            wpm,
+            accuracy,
+            translation: verse.bibleId || 'unknown',
+            reference: verse.reference,
+          });
+
           setResultSaved(true);
           console.log('Typing result saved successfully');
-        })
-        .catch((error) => {
+        } catch (error) {
           console.error('Error saving typing result:', error);
-        });
-    }
+        }
+      }
+    };
+
+    saveTypingResult();
   }, [isComplete, verse, wpm, accuracy, saveResult, resultSaved]);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -106,7 +109,6 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
     // Check if typing is complete
     if (checkCompletion(newText)) {
       setIsComplete(true);
-      saveResultRef.current = true; // Set flag to save result
     }
   };
 
@@ -118,7 +120,6 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
     setIsComplete(false);
     setProgress(0);
     setResultSaved(false);
-    saveResultRef.current = false;
   }, []);
 
   // Handle keyboard shortcuts
@@ -203,7 +204,7 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
             rows={3}
             disabled={isComplete}
             placeholder="Start typing to begin..."
-            // biome-ignore lint/a11y/noAutofocus: Autofocus is needed for typing tests
+            // biome-ignore lint/a11y/noAutofocus: autofocus is needed for typing tests
             autoFocus
           />
 
