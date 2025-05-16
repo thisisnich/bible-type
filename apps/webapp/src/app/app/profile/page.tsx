@@ -197,9 +197,9 @@ export default function ProfilePage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-end mb-6">
+        {/* <div className="flex justify-end mb-6">
           <DarkModeToggle />
-        </div>
+        </div> */}
 
         <Card className="p-6 mb-6">
           <h1 className="text-2xl font-bold mb-6">Your Profile</h1>

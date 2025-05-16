@@ -69,11 +69,12 @@ export function UserMenu({ className, alignMenu = 'end', showNameOnMobile = true
     () => [
       { href: '/app/profile', label: 'Profile' },
       { href: '/app', label: 'Dashboard' },
+      { href: '/history', label: 'History' },
       // Add Bible Type specific menu items
-      { href: '/study', label: 'Study' },
-      { href: '/verses', label: 'Verses' },
-      { href: '/practice', label: 'Practice' },
-      { href: '/progress', label: 'My Progress' },
+      // { href: '/study', label: 'Study' },
+      // { href: '/verses', label: 'Verses' },
+      // { href: '/practice', label: 'Practice' },
+      // { href: '/progress', label: 'My Progress' },
     ],
     []
   );
