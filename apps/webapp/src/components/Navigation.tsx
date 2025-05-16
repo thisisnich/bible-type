@@ -31,28 +31,33 @@ export function Navigation() {
               label: 'History',
               isActive: pathname.startsWith('/study'),
             },
-            {
-              href: '/verses',
-              label: 'Verses',
-              isActive: pathname.startsWith('/verses'),
-            },
-            {
-              href: '/practice',
-              label: 'Practice',
-              isActive: pathname.startsWith('/practice'),
-            },
+            // {
+            //   href: '/verses',
+            //   label: 'Verses',
+            //   isActive: pathname.startsWith('/verses'),
+            // },
+            // {
+            //   href: '/practice',
+            //   label: 'Practice',
+            //   isActive: pathname.startsWith('/practice'),
+            // },
           ]
         : [
             // Navigation items for non-authenticated users
+            // {
+            //   href: '/about',
+            //   label: 'About',
+            //   isActive: pathname === '/about',
+            // },
+            // {
+            //   href: '/features',
+            //   label: 'Features',
+            //   isActive: pathname === '/features',
+            // },
             {
-              href: '/about',
-              label: 'About',
-              isActive: pathname === '/about',
-            },
-            {
-              href: '/features',
-              label: 'Features',
-              isActive: pathname === '/features',
+              href: '/login',
+              label: 'Login',
+              isActive: pathname === '/login',
             },
           ]),
     ],
