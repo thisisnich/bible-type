@@ -259,6 +259,7 @@ export const cacheVerse = mutation({
   },
 });
 
+// Function to save typing result to the database
 export const saveTypingResult = mutation({
   args: {
     verseId: v.string(),
@@ -266,10 +267,32 @@ export const saveTypingResult = mutation({
     accuracy: v.number(),
     translation: v.string(),
     reference: v.string(),
+    content: v.optional(v.string()),
+    bookId: v.optional(v.string()),
+    chapterId: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<string> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error('Not authenticated');
+
+    // If we don't have content, bookId, or chapterId in the args,
+    // try to get them from the cached verse
+    let content = args.content;
+    let bookId = args.bookId;
+    let chapterId = args.chapterId;
+
+    if (!content || !bookId || !chapterId) {
+      const cachedVerse = await ctx.db
+        .query('cachedVerses')
+        .withIndex('by_verse', (q) => q.eq('verseId', args.verseId).eq('bibleId', args.translation))
+        .first();
+
+      if (cachedVerse) {
+        content = content || cachedVerse.content;
+        bookId = bookId || cachedVerse.bookId;
+        chapterId = chapterId || cachedVerse.chapterId;
+      }
+    }
 
     const id = await ctx.db.insert('typingHistory', {
       userId: identity.subject as Id<'users'>,
@@ -279,12 +302,14 @@ export const saveTypingResult = mutation({
       accuracy: args.accuracy,
       translation: args.translation,
       reference: args.reference,
+      content: content,
+      bookId: bookId,
+      chapterId: chapterId,
     });
 
     return id;
   },
 });
-
 export const getTypingHistory = query({
   args: {},
   handler: async (ctx): Promise<TypingHistory> => {

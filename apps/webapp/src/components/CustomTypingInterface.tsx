@@ -1,6 +1,6 @@
 import { api } from '@workspace/backend/convex/_generated/api';
 import { useMutation } from 'convex/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Define Bible verse structure
 type BibleVerse = {
@@ -19,6 +19,8 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
   const [accuracy, setAccuracy] = useState(100);
   const [isComplete, setIsComplete] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [resultSaved, setResultSaved] = useState(false);
+  const saveResultRef = useRef(false);
 
   // Clean up the verse content for typing - bible-api.com returns plain text already
   const getCleanText = useCallback((text: string) => {
@@ -69,6 +71,30 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
     [targetText, verse]
   );
 
+  // Effect to save results when typing is complete
+  useEffect(() => {
+    if (isComplete && verse && !resultSaved && saveResultRef.current) {
+      // Save the typing result to the database with all relevant verse info
+      saveResult({
+        verseId: verse.id,
+        wpm,
+        accuracy,
+        translation: verse.bibleId || 'unknown',
+        reference: verse.reference,
+        content: verse.content,
+        bookId: verse.bookId,
+        chapterId: verse.chapterId,
+      })
+        .then(() => {
+          setResultSaved(true);
+          console.log('Typing result saved successfully');
+        })
+        .catch((error) => {
+          console.error('Error saving typing result:', error);
+        });
+    }
+  }, [isComplete, verse, wpm, accuracy, saveResult, resultSaved]);
+
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (isComplete || !verse) return;
     if (!startTime) setStartTime(Date.now());
@@ -80,15 +106,7 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
     // Check if typing is complete
     if (checkCompletion(newText)) {
       setIsComplete(true);
-      if (verse) {
-        saveResult({
-          verseId: verse.id,
-          wpm,
-          accuracy,
-          translation: verse.bibleId || 'unknown',
-          reference: verse.reference,
-        });
-      }
+      saveResultRef.current = true; // Set flag to save result
     }
   };
 
@@ -99,6 +117,8 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
     setAccuracy(100);
     setIsComplete(false);
     setProgress(0);
+    setResultSaved(false);
+    saveResultRef.current = false;
   }, []);
 
   // Handle keyboard shortcuts
@@ -198,6 +218,7 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
                   <p className="text-xl">
                     Accuracy: <span className="font-bold">{accuracy}%</span>
                   </p>
+                  {resultSaved && <p className="text-sm mt-2">Result saved to your history</p>}
                 </div>
               </div>
               <button

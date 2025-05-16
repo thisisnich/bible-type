@@ -59,7 +59,11 @@ export default defineSchema({
     translation: v.string(), // The translation used
     reference: v.string(), // The reference of the verse typed
     verseId: v.string(), // The ID of the verse
+    content: v.optional(v.string()), // Optional: The actual content that was typed
+    bookId: v.optional(v.string()), // The book ID (e.g., "JHN")
+    chapterId: v.optional(v.string()), // The chapter ID (e.g., "JHN.3")
   }).index('by_user', ['userId']),
+
   cachedVerses: defineTable({
     verseId: v.string(), // The ID of the verse
     bibleId: v.string(), // The ID of the Bible

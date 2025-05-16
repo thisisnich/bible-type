@@ -19,15 +19,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import { useAuthState } from '@/modules/auth/AuthProvider';
 import { api } from '@workspace/backend/convex/_generated/api';
 import { useSessionMutation } from 'convex-helpers/react/sessions';
+import { LogOut, User } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-export function UserMenu() {
+interface UserMenuProps {
+  className?: string;
+  alignMenu?: 'start' | 'center' | 'end';
+  showNameOnMobile?: boolean;
+}
+
+export function UserMenu({ className, alignMenu = 'end', showNameOnMobile = true }: UserMenuProps) {
   const authState = useAuthState();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -38,7 +46,11 @@ export function UserMenu() {
     return null;
   }
 
-  const handleLogout = async () => {
+  // Memoize whether we're in mobile menu
+  const isMobileMenu = useMemo(() => alignMenu === 'start', [alignMenu]);
+
+  // Use callback for logout handler to prevent unnecessary re-renders
+  const handleLogout = useCallback(async () => {
     setIsLoggingOut(true);
     try {
       await logout();
@@ -50,7 +62,21 @@ export function UserMenu() {
     } finally {
       setIsLoggingOut(false);
     }
-  };
+  }, [logout, router]);
+
+  // Memoize navigation items for the user menu
+  const navItems = useMemo(
+    () => [
+      { href: '/app/profile', label: 'Profile' },
+      { href: '/app', label: 'Dashboard' },
+      // Add Bible Type specific menu items
+      { href: '/study', label: 'Study' },
+      { href: '/verses', label: 'Verses' },
+      { href: '/practice', label: 'Practice' },
+      { href: '/progress', label: 'My Progress' },
+    ],
+    []
+  );
 
   return (
     <>
@@ -79,26 +105,45 @@ export function UserMenu() {
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="relative flex items-center text-sm font-medium focus:outline-none text-muted-foreground hover:text-foreground"
+            className={cn(
+              'relative flex items-center gap-2 text-sm font-medium focus:outline-none text-muted-foreground hover:text-foreground',
+              isMobileMenu ? 'w-full justify-start py-2 px-3' : '',
+              !showNameOnMobile ? 'md:gap-2' : '',
+              className
+            )}
           >
-            {authState.user.name}
+            <User className="h-4 w-4" />
+            <span className={cn(!showNameOnMobile && 'hidden md:inline')}>
+              {authState.user.name}
+            </span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuContent
+          side="bottom"
+          align={alignMenu}
+          className={cn('w-56', isMobileMenu ? 'w-full max-w-none' : '')}
+          sideOffset={isMobileMenu ? 0 : 4}
+          forceMount
+        >
+          <DropdownMenuLabel className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            <span>{authState.user.name}</span>
+          </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <Link href="/app/profile">
-            <DropdownMenuItem className="cursor-pointer">Profile</DropdownMenuItem>
-          </Link>
-          <Link href="/app">
-            <DropdownMenuItem className="cursor-pointer">Dashboard</DropdownMenuItem>
-          </Link>
+
+          {navItems.map((item) => (
+            <Link href={item.href} key={item.href}>
+              <DropdownMenuItem className="cursor-pointer py-2">{item.label}</DropdownMenuItem>
+            </Link>
+          ))}
+
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+            className="cursor-pointer py-2 text-red-600 focus:text-red-600 focus:bg-red-50 flex items-center gap-2"
             onClick={() => setShowLogoutConfirm(true)}
             disabled={isLoggingOut}
           >
+            <LogOut className="h-4 w-4" />
             {isLoggingOut ? 'Logging out...' : 'Log out'}
           </DropdownMenuItem>
         </DropdownMenuContent>

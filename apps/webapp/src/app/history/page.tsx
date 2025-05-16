@@ -3,13 +3,31 @@
 import { CustomBibleSelector } from '@/components/CustomBibleSelector';
 import { CustomTypingInterface } from '@/components/CustomTypingInterface';
 import { TypingApp } from '@/components/TypingApp';
+import { TypingHistory } from '@/components/TypingHistory';
 import { Button } from '@/components/ui/button';
 import { useAuthState } from '@/modules/auth/AuthProvider';
 import { RequireLogin } from '@/modules/auth/RequireLogin';
 import Link from 'next/link';
+import { useState } from 'react';
+
+// Define Bible verse structure
+type BibleVerse = {
+  id: string;
+  reference: string;
+  bookId: string;
+  chapterId: string;
+  content: string;
+  bibleId?: string;
+};
 
 export default function AppPage() {
   const authState = useAuthState();
+  const [selectedVerse, setSelectedVerse] = useState<BibleVerse | null>(null);
+
+  // Handle verse selection from the BibleSelector
+  const handleVerseSelect = (verse: BibleVerse) => {
+    setSelectedVerse(verse);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -25,7 +43,7 @@ export default function AppPage() {
           </div>
 
           {authState?.state === 'authenticated' && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {authState.user.type === 'anonymous' && (
                 <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
                   <p className="text-sm text-blue-800">
@@ -41,23 +59,37 @@ export default function AppPage() {
                   </p>
                 </div>
               )}
+
+              {/* Bible Selector Component */}
+              <CustomBibleSelector onVerseSelect={handleVerseSelect} />
+
+              {/* Typing Interface */}
               <div className="p-4 bg-gray-100 rounded-md">
-                <TypingApp />
+                <CustomTypingInterface verse={selectedVerse} />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                <div className="p-4 border rounded-md">
-                  <h3 className="font-medium mb-2">Your Content</h3>
-                  <p className="text-sm text-gray-600">
-                    No content yet. Start creating by using the app features.
-                  </p>
-                </div>
-                <div className="p-4 border rounded-md">
-                  <h3 className="font-medium mb-2">Recent Activity</h3>
-                  <p className="text-sm text-gray-600">Your recent activity will appear here.</p>
-                </div>
-                re
+              {/* History Section */}
+              <div className="mt-8">
+                <h2 className="text-xl font-semibold mb-4">Your BibleType Activity</h2>
+                <TypingHistory />
               </div>
+            </div>
+          )}
+
+          {authState?.state !== 'authenticated' && (
+            <div className="mt-4 p-3 bg-yellow-50 rounded border border-yellow-200">
+              <p className="text-sm text-yellow-800">
+                <span className="font-semibold">Note:</span> You need to be logged in to access the
+                typing interface and history. Please{' '}
+                <Link href="/login" className="text-yellow-600 underline hover:text-yellow-800">
+                  log in
+                </Link>{' '}
+                or{' '}
+                <Link href="/register" className="text-yellow-600 underline hover:text-yellow-800">
+                  register
+                </Link>{' '}
+                to continue.
+              </p>
             </div>
           )}
         </div>
