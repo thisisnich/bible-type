@@ -68,7 +68,7 @@ export function UserMenu({ className, alignMenu = 'end', showNameOnMobile = true
   const navItems = useMemo(
     () => [
       { href: '/app/profile', label: 'Profile' },
-      { href: '/app', label: 'Dashboard' },
+      { href: '/app', label: 'Practice' },
       { href: '/history', label: 'History' },
       // Add Bible Type specific menu items
       // { href: '/study', label: 'Study' },

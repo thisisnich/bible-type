@@ -21,7 +21,7 @@ export function Navigation() {
         ? [
             {
               href: '/app',
-              label: 'Dashboard',
+              label: 'Practice',
               isActive: pathname === '/app',
             },
             // Add more navigation items for authenticated users here
@@ -72,7 +72,7 @@ export function Navigation() {
             href={isAuthenticated ? '/app' : '/'}
             className="flex items-center whitespace-nowrap"
           >
-            <span className="font-bold text-lg">Bible Type</span>
+            <span className="font-bold text-lg">BibleType</span>
           </Link>
         </div>
 
