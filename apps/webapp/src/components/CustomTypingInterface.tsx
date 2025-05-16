@@ -1,6 +1,5 @@
 import { api } from '@workspace/backend/convex/_generated/api';
 import { useSessionMutation } from 'convex-helpers/react/sessions';
-import { SessionIdArg } from 'convex-helpers/server/sessions';
 import { useCallback, useEffect, useState } from 'react';
 
 // Define Bible verse structure
@@ -21,28 +20,36 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
   const [isComplete, setIsComplete] = useState(false);
   const [progress, setProgress] = useState(0);
   const [resultSaved, setResultSaved] = useState(false);
+  const [normalizedTargetText, setNormalizedTargetText] = useState('');
 
   // Clean up the verse content for typing - bible-api.com returns plain text already
   const getCleanText = useCallback((text: string) => {
     // Remove any potential HTML tags just to be safe
     const withoutTags = text.replace(/<[^>]*>/g, '');
+    // Replace typographical quotes and apostrophes with straight ones
+    const normalizedText = withoutTags
+      .replace(/['']/g, "'") // Replace curly apostrophes with straight ones
+      .replace(/[""]/g, '"'); // Replace curly quotes with straight ones
     // Remove extra whitespace and normalize
-    return withoutTags.trim().replace(/\s+/g, ' ');
+    return normalizedText.trim().replace(/\s+/g, ' ');
   }, []);
 
   // Use the provided verse or default to a placeholder
-  const targetText = verse
-    ? getCleanText(verse.content)
-    : 'Please select a Bible verse to start typing.';
+  const targetText = verse ? verse.content : 'Please select a Bible verse to start typing.';
 
   // Use the same session mutation pattern as seen in BudgetForm
   const saveResult = useSessionMutation(api.bible.saveTypingResult);
 
-  // Reset typing state when verse changes
-  // biome-ignore lint/correctness/useExhaustiveDependencies: This is a controlled effect
+  // Reset typing state when verse changes and normalize text
   useEffect(() => {
     handleRestart();
-  }, [verse]);
+    if (verse) {
+      const normalized = getCleanText(verse.content);
+      setNormalizedTargetText(normalized);
+    } else {
+      setNormalizedTargetText('Please select a Bible verse to start typing.');
+    }
+  }, [verse, getCleanText]);
 
   const calculateStats = useCallback(() => {
     if (!startTime || !verse) return;
@@ -51,16 +58,21 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
     const keystrokes = currentText.length;
     const newWpm = Math.round(keystrokes / 5 / timeElapsed);
 
-    const matches = currentText.split('').filter((char, i) => char === targetText[i]).length;
+    const matches = currentText
+      .split('')
+      .filter((char, i) => char === normalizedTargetText[i]).length;
     const newAccuracy = Math.round((matches / Math.max(currentText.length, 1)) * 100);
 
     // Calculate progress
-    const newProgress = Math.min(100, Math.round((currentText.length / targetText.length) * 100));
+    const newProgress = Math.min(
+      100,
+      Math.round((currentText.length / normalizedTargetText.length) * 100)
+    );
 
     setWpm(newWpm);
     setAccuracy(newAccuracy);
     setProgress(newProgress);
-  }, [currentText, startTime, targetText, verse]);
+  }, [currentText, startTime, normalizedTargetText, verse]);
 
   // Check for completion
   const checkCompletion = useCallback(
@@ -68,9 +80,9 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
       if (!verse) return false;
 
       // Check if we've typed the full target text
-      return text.length >= targetText.length;
+      return text.length >= normalizedTargetText.length;
     },
-    [targetText, verse]
+    [normalizedTargetText, verse]
   );
 
   // Effect to save results when typing is complete
@@ -175,7 +187,7 @@ export function CustomTypingInterface({ verse }: { verse: BibleVerse | null }) {
           </div>
 
           <div className="font-mono text-lg bg-slate-100 p-4 rounded whitespace-pre-wrap break-words">
-            {targetText.split('').map((char, i) => {
+            {normalizedTargetText.split('').map((char, i) => {
               const typed = currentText[i];
               let className = '';
 

@@ -52,11 +52,10 @@ export default function AppPage() {
                     No content yet. Start creating by using the app features.
                   </p>
                 </div>
-                <div className="p-4 border rounded-md">
-                  <h3 className="font-medium mb-2">Recent Activity</h3>
-                  <p className="text-sm text-gray-600">Your recent activity will appear here.</p>
-                </div>
-                re
+                <a className="p-4 border rounded-md" href="/history">
+                  <h3 className="font-medium mb-2">History</h3>
+                  <p className="text-sm text-gray-600">See your past results</p>
+                </a>
               </div>
             </div>
           )}
